@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Таблицы{% endblock %}
+{% block content %}
+  <h1>Таблицы в базе</h1>
+  <p class="muted">База: <code>construction_monitoring</code></p>
+  <ul>
+    {% for t in tables %}
+      <li>
+        <a href="/table/{{ t.table_name }}"><code>{{ t.table_name }}</code></a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

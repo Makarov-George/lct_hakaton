@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}{{ site.name }}{% endblock %}
+{% block content %}
+
+<h1>{{ site.name }}</h1>
+<p class="muted">
+  {{ site.site_type_name or '—' }} · {{ site.address or '—' }}
+</p>
+
+<div style="margin:12px 0; display:flex; gap:12px; align-items:center;">
+  {% if site.closed_at %}
+    <form method="post"
+          action="{{ url_for('site_unarchive', site_id=site.id) }}"
+          style="display:inline;">
+      <button type="submit" class="btn btn-secondary">
+        Вернуть из архива
+      </button>
+    </form>
+    <span class="muted">
+      В архиве с {{ site.closed_at | fmt_dt or site.closed_at }}
+    </span>
+  {% else %}
+    <form method="post"
+          action="{{ url_for('site_archive', site_id=site.id) }}"
+          style="display:inline;"
+          onsubmit="return confirm('Переместить объект в архив?');">
+      <button type="submit" class="btn btn-danger">
+        В архив
+      </button>
+    </form>
+  {% endif %}
+</div>
+
+<h3>Актуальные этапы</h3>
+<table>
+  <thead>
+    <tr><th>Начало</th><th>Окончание</th><th>Запланированный этап</th><th>Статус</th></tr>
+  </thead>
+  <tbody>
+    {% for t in plan_tasks %}
+      <tr>
+        <td>{{ t.start_date }}</td>
+        <td>{{ t.end_date }}</td>
+        <td>{{ t.work_type_name }}</td>
+        <td>{{ (t.status | defined ) or '—' }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div style="margin:12px 0; display:flex; gap:12px; align-items:center;">
+  <a class="btn" href="{{ url_for('site_plan_edit', site_id=site.id) }}">
+    Изменить план
+  </a>
+</div>
+<h2>Отклонения</h2>
+{% if deviations %}
+  <table>
+    <thead>
+      <tr>
+        <th>Камера</th>
+        <th>Тип</th><th>Вид работ</th>
+        <th>Техника</th><th>Статус</th><th>Важность</th><th>Дата последней проверки</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in deviations %}
+        <tr>
+          <td>{{ d.camera_name or '—' }}</td>
+          <td>{{ d.type | defined }}</td>
+          <td>{{ d.work_type_name or '—' }}</td>
+          <td>{{ d.equipment_class_name or '—' }}</td>
+          <td>{{ d.status | defined }}</td>
+          <td>{{ d.severity | defined }}</td>
+          <td>{{ d.last_seen_at }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="muted">Отклонений нет.</p>
+{% endif %}
+
+<h2>Последние фотографии</h2>
+{% if frames %}
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px;">
+    {% for f in frames %}
+      <div style="background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:8px;">
+        <div class="muted" style="font-size:12px;">
+          {{ f.camera_name or '—' }}<br>
+          {{ f.captured_at }}
+        </div>
+        <div style="margin-top:6px; font-size:12px;">
+          <code>{{ f.storage_key }}</code>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="muted">Фотографий пока нет.</p>
+{% endif %}
+
+<h2>История изменений</h2>
+{% if history %}
+  <table>
+    <thead>
+      <tr>
+        <th>Время</th><th>Отклонение</th><th>Событие</th>
+        <th>Статус системы</th><th>Важность</th><th>Автор изменения</th><th>Комментарий</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in history %}
+        <tr>
+          <td>{{ h.created_at }}</td>
+          <td>{{ h.deviation_type | defined }}</td>
+          <td>{{ h.change | defined }}</td>
+          <td>{{ h.status | defined }}</td>
+          <td>{{ h.severity | defined }}</td>
+          <td>{{ h.actor or '—' }}</td>
+          <td>{{ h.comment or '—' }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="muted">История пуста.</p>
+{% endif %}
+
+<p style="margin-top:24px;"><a href="{{ url_for('index') }}">← К списку объектов</a></p>
+
+{% endblock %}

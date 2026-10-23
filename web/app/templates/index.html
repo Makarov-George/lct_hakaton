@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Объекты{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center;">
+  <h1>Объекты</h1>
+  <a href="{{ url_for('site_new') }}">
+    <button>+ Создать объект</button>
+  </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="{{ 'error' if cat == 'error' else '' }}"
+         style="padding:8px 12px; border-radius:6px; background:#e0f2fe; margin:8px 0;">
+      {{ msg }}
+    </div>
+  {% endfor %}
+{% endwith %}
+
+<table>
+  <thead>
+    <tr>
+      <th>Название</th>
+      <th>Тип участка</th>
+      <th>Текущий этап</th>
+      <th>Отклонения</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in sites %}
+      <tr>
+        <td>
+          <strong>{{ s.name }}</strong><br>
+          <span class="muted">{{ s.address or '—' }}</span>
+        </td>
+        <td>{{ s.site_type_name or '—' }}</td>
+        <td>
+          {% if s.active_tasks %}
+            {% for t in s.active_tasks %}
+              {% if t.work_type_observable %}
+                <div>{{ t.work_type_name }}</div>
+              {% else %}
+                <div>
+                  {{ t.work_type_name }}
+                  <span class="badge-doc" title="Проверяется только по документации, камеры не контролируют этот этап">
+                    из документации
+                  </span>
+                </div>
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            <span class="muted">нет данных для построения анализа</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if s.open_deviations %}
+            <span style="color:#b91c1c; font-weight:600;">
+              {{ s.open_deviations }}
+              {% if s.worst_severity == 3 %}(критично)
+              {% elif s.worst_severity == 2 %}(предупреждение)
+              {% else %}(инфо){% endif %}
+            </span>
+          {% else %}
+            <span style="color:#15803d;">нет</span>
+          {% endif %}
+        </td>
+        <td><a href="{{ url_for('site_detail', site_id=s.id) }}">Подробнее →</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if not sites %}
+  <p class="muted">Пока нет ни одного объекта. <a href="{{ url_for('site_new') }}">Создать первый</a>.</p>
+{% endif %}
+
+{% endblock %}

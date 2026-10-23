@@ -1,0 +1,18 @@
+services:
+  web:
+    build: .
+    image: cm-web:latest
+    container_name: cm-web
+    environment:
+      CM_DATABASE_URL: ${CM_DATABASE_URL:-postgresql://cm_admin:admin_password@db:5432/construction_monitoring}
+      FLASK_ENV: ${FLASK_ENV:-production}
+    ports:
+      - "${CM_WEB_PORT:-8000}:8000"
+    networks:
+      - cm-net
+    restart: unless-stopped
+
+networks:
+  cm-net:
+    external: true
+    name: ${CM_NETWORK:-db_default}

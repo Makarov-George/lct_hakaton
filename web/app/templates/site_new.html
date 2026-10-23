@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Новый объект{% endblock %}
+{% block content %}
+
+<h1>Создать объект</h1>
+
+<form method="post">
+
+  <h2>Основное</h2>
+  <p>
+    <label>Название*<br>
+      <input type="text" name="name" required style="width:400px;">
+    </label>
+  </p>
+  <p>
+    <label>Адрес<br>
+      <input type="text" name="address" style="width:400px;">
+    </label>
+  </p>
+  <p>
+    <label>Тип участка<br>
+      <select name="site_type_id" id="site_type_id" onchange="reloadWorkTypes()">
+        <option value="">— не выбран —</option>
+        {% for t in site_types %}
+          <option value="{{ t.id }}">{{ t.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <span class="muted" id="work-types-hint" style="margin-left:8px;"></span>
+  </p>
+
+  <h2>Камеры</h2>
+  <table id="cameras-table">
+    <thead>
+      <tr>
+        <th>Название</th>
+        <th>Порог отсутствия данных, мин</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <p><button type="button" onclick="addCamera()">+ Добавить камеру</button></p>
+
+  <h2>План работ</h2>
+  <table id="plans-table">
+    <thead>
+      <tr>
+        <th>Вид работ</th>
+        <th>Начало</th>
+        <th>Окончание</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <p><button type="button" onclick="addPlan()">+ Добавить этап</button></p>
+
+  <p style="margin-top:24px;">
+    <button type="submit">Создать</button>
+    <a href="{{ url_for('index') }}">Отмена</a>
+  </p>
+
+</form>
+
+<script>
+// Кэш применимых видов работ для текущего типа участка
+let currentWorkTypes = [];
+
+function workTypeOptionsHtml(selectedId) {
+  let html = '<option value="">— выберите —</option>';
+  for (const it of currentWorkTypes) {
+    const sel = (selectedId && it.id === selectedId) ? ' selected' : '';
+    html += `<option value="${it.id}"${sel}>${it.name}</option>`;
+  }
+  return html;
+}
+
+function refreshAllPlanSelects() {
+  document.querySelectorAll('select[name="plan_work_type_id[]"]').forEach(sel => {
+    const current = sel.value;
+    sel.innerHTML = workTypeOptionsHtml(current);
+  });
+}
+
+async function reloadWorkTypes() {
+  const siteTypeId = document.getElementById('site_type_id').value;
+  const hint = document.getElementById('work-types-hint');
+
+  if (!siteTypeId) {
+    currentWorkTypes = [];
+    hint.textContent = '(выберите тип участка, чтобы увидеть виды работ)';
+    refreshAllPlanSelects();
+    return;
+  }
+
+  hint.textContent = 'загрузка…';
+  try {
+    const resp = await fetch('/api/applicable-work-types?site_type_id='
+                             + encodeURIComponent(siteTypeId));
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    currentWorkTypes = await resp.json();
+    hint.textContent = currentWorkTypes.length
+      ? `(${currentWorkTypes.length} вид(ов) работ)`
+      : '(для этого типа участка нет применимых работ)';
+  } catch (e) {
+    currentWorkTypes = [];
+    hint.textContent = '(ошибка загрузки: ' + e.message + ')';
+  }
+  refreshAllPlanSelects();
+}
+
+function addCamera() {
+  const tbody = document.querySelector('#cameras-table tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" name="camera_name[]" style="width:100%;"></td>
+    <td><input type="number" name="camera_no_data_after_min[]" min="1"
+               value="60" style="width:100px;"></td>
+    <td><button type="button" onclick="this.closest('tr').remove()">×</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function addPlan() {
+  const tbody = document.querySelector('#plans-table tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>
+      <select name="plan_work_type_id[]" style="width:100%;">
+        ${workTypeOptionsHtml()}
+      </select>
+    </td>
+    <td><input type="date" name="plan_start_date[]"></td>
+    <td><input type="date" name="plan_end_date[]"></td>
+    <td><button type="button" onclick="this.closest('tr').remove()">×</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+// Инициализация
+addCamera();
+addPlan();
+reloadWorkTypes();   // на случай, если тип уже выбран
+</script>
+
+{% endblock %}

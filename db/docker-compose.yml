@@ -1,0 +1,15 @@
+# Запуск только базы данных.
+services:
+  db:
+    build: .
+    image: cm-db:latest
+    container_name: cm-db
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin_password}
+    ports:
+      - "${CM_DB_PORT:-54321}:5432"
+    volumes:
+      - cm-db-data:/var/lib/postgresql/data
+
+volumes:
+  cm-db-data:

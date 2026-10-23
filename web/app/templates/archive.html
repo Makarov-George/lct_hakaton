@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Архив{% endblock %}
+{% block content %}
+
+<h1>Архив объектов</h1>
+
+{% if sites %}
+  <table>
+    <thead>
+      <tr>
+        <th>Название</th>
+        <th>Тип</th>
+        <th>Адрес</th>
+        <th>Дата архивации</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sites %}
+        <tr>
+          <td>{{ s.name }}</td>
+          <td>{{ s.site_type_name or '—' }}</td>
+          <td>{{ s.address or '—' }}</td>
+          <td>{{ s.closed_at }}</td>
+          <td>
+            <a href="{{ url_for('site_detail', site_id=s.id) }}">Подробнее →</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="muted">Архив пуст.</p>
+{% endif %}
+
+<p style="margin-top:24px;"><a href="{{ url_for('index') }}">← К активным объектам</a></p>
+
+{% endblock %}

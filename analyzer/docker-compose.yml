@@ -1,0 +1,20 @@
+services:
+  analyzer:
+    build: .
+    image: cm-analyzer:latest
+    container_name: cm-analyzer
+    environment:
+      CM_DATABASE_URL: ${CM_DATABASE_URL:-postgresql://cm_admin:admin_password@db:5432/construction_monitoring}
+      CM_LOG_LEVEL: ${CM_LOG_LEVEL:-INFO}
+      CM_ANALYZER__INTERVAL_SECONDS: ${CM_ANALYZER_INTERVAL:-3600}
+      CM_ANALYZER__ANALYSIS_WINDOW_MINUTES: ${CM_ANALYZER_WINDOW:-60}
+      CM_ANALYZER__GRACE__ARRIVAL_MINUTES: ${CM_ANALYZER_GRACE_ARRIVAL:-60}
+      CM_ANALYZER__GRACE__DEPARTURE_MINUTES: ${CM_ANALYZER_GRACE_DEPARTURE:-60}
+    networks:
+      - cm-net
+    restart: unless-stopped
+
+networks:
+  cm-net:
+    external: true
+    name: ${CM_NETWORK:-db_default}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ name }}{% endblock %}
+{% block content %}
+  <h1>Таблица: <code>{{ name }}</code></h1>
+  <p class="muted">
+    Показано {{ rows|length }} строк (лимит {{ limit }}).
+    <a href="/table/{{ name }}?limit=1000">Показать 1000</a>
+  </p>
+
+  {% if rows %}
+    <table>
+      <thead>
+        <tr>
+          {% for c in columns %}<th>{{ c }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+          <tr>
+            {% for c in columns %}
+              <td>{{ r[c] }}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted">Таблица пуста.</p>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}План: {{ site.name }}{% endblock %}
+{% block content %}
+
+<h1>План работ</h1>
+<p class="muted">
+  Объект: <strong>{{ site.name }}</strong> ({{ site.site_type_name or '—' }})
+</p>
+
+<form method="post">
+
+  <h2>Существующие этапы</h2>
+  <table id="existing-table">
+    <thead>
+      <tr>
+        <th>Вид работ</th>
+        <th>Начало</th>
+        <th>Окончание</th>
+        <th>Удалить</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in plan_tasks %}
+        <tr>
+          <td>
+            <input type="hidden" name="pt_id[]" value="{{ t.id }}">
+            <select name="pt_work_type_id[]" style="width:100%;">
+              {% for wt in work_types %}
+                <option value="{{ wt.id }}"
+                  {% if wt.id == t.work_type_id %}selected{% endif %}>
+                  {{ wt.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </td>
+          <td><input type="date" name="pt_start_date[]" value="{{ t.start_date }}"></td>
+          <td><input type="date" name="pt_end_date[]"   value="{{ t.end_date }}"></td>
+          <td style="text-align:center;">
+            <input type="checkbox" name="delete_ids[]" value="{{ t.id }}">
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not plan_tasks %}
+    <p class="muted">Этапов пока нет — добавьте первый ниже.</p>
+  {% endif %}
+
+  <h2>Новые этапы</h2>
+  <table id="new-table">
+    <thead>
+      <tr>
+        <th>Вид работ</th>
+        <th>Начало</th>
+        <th>Окончание</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <p>
+    <button type="button" onclick="addNewRow()">+ Добавить этап</button>
+  </p>
+
+  <p style="margin-top:24px;">
+    <button type="submit">Сохранить</button>
+    <a href="{{ url_for('site_detail', site_id=site.id) }}">Отмена</a>
+  </p>
+
+</form>
+
+<script>
+// Список видов работ для рендера <select>
+const WORK_TYPES = [
+  {% for wt in work_types %}
+    { id: "{{ wt.id }}", name: "{{ wt.name }}" }{{ "," if not loop.last }}
+  {% endfor %}
+];
+
+function workTypeSelectHtml() {
+  let html = '<option value="">— выберите —</option>';
+  for (const wt of WORK_TYPES) {
+    html += `<option value="${wt.id}">${wt.name}</option>`;
+  }
+  return html;
+}
+
+function addNewRow() {
+  const tbody = document.querySelector('#new-table tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>
+      <select name="new_work_type_id[]" style="width:100%;">
+        ${workTypeSelectHtml()}
+      </select>
+    </td>
+    <td><input type="date" name="new_start_date[]"></td>
+    <td><input type="date" name="new_end_date[]"></td>
+    <td><button type="button" onclick="this.closest('tr').remove()">×</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+// сразу одна пустая строка — удобно
+addNewRow();
+</script>
+
+{% endblock %}
